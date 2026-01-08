@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { UserPlus, Save, Phone, DollarSign, User, Calendar, Clock, CheckCircle2, AlertCircle, QrCode, Copy, Share2, X, Edit3, Trash2 } from 'lucide-react';
+import { UserPlus, Save, Phone, DollarSign, User, Calendar, Clock, CheckCircle2, AlertCircle, QrCode, Copy, Share2, X, Edit3, Trash2, CalendarDays, Hash, Users } from 'lucide-react';
 import { Student, CLASS_HOURS, StudentStatus } from '../types';
 
 interface RegistrationFormProps {
@@ -50,14 +50,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ students, onAddStud
   const [error, setError] = useState('');
 
   const enrollmentLink = useMemo(() => {
-    // Tenta obter a URL base limpa, removendo blob: se existir
     let base = window.location.href.replace(/^blob:/, '');
     try {
       const url = new URL(base);
       url.searchParams.set('mode', 'enroll');
       return url.toString();
     } catch (e) {
-      // Fallback caso a URL seja inválida por algum motivo de ambiente
       return `${base.split('?')[0]}?mode=enroll`;
     }
   }, []);
@@ -111,23 +109,24 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ students, onAddStud
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-5xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-8 duration-700">
       
       {!editingStudent && (
-        <div className="mb-10 bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 shadow-2xl relative group">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="bg-blue-600 p-5 rounded-[2rem] shadow-xl">
-              <QrCode className="w-10 h-10 text-white" />
+        <div className="mb-10 bg-slate-900 border border-slate-800 rounded-[3rem] p-10 shadow-2xl relative group overflow-hidden">
+          <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/5 blur-[80px] -z-10" />
+          <div className="flex flex-col md:flex-row items-center gap-10">
+            <div className="bg-blue-600 p-6 rounded-[2.5rem] shadow-xl shadow-blue-900/40">
+              <QrCode className="w-12 h-12 text-white" />
             </div>
             <div className="flex-1">
-              <h4 className="text-white font-black text-xl tracking-tighter uppercase">Link de Auto-Matrícula</h4>
-              <p className="text-slate-500 text-xs font-bold mt-2">O aluno preenche no próprio celular.</p>
+              <h4 className="text-2xl font-black text-white tracking-tighter uppercase">Link de Auto-Matrícula</h4>
+              <p className="text-slate-500 text-sm font-bold mt-2 uppercase tracking-widest">Agilize o processo: O próprio aluno faz o cadastro.</p>
             </div>
-            <div className="flex flex-col gap-3 w-full md:w-auto">
-              <button type="button" onClick={() => {navigator.clipboard.writeText(enrollmentLink); alert('Link copiado!');}} className="bg-slate-800 text-white p-3 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all hover:bg-slate-700">
-                <Copy className="w-4 h-4" /> Copiar Link
+            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+              <button type="button" onClick={() => {navigator.clipboard.writeText(enrollmentLink); alert('Link copiado!');}} className="bg-slate-800 hover:bg-slate-700 text-white px-8 py-4 rounded-2xl flex items-center justify-center gap-3 text-xs font-black uppercase tracking-widest transition-all">
+                <Copy className="w-4 h-4 text-blue-500" /> Copiar Link
               </button>
-              <button type="button" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Olá! Faça sua matrícula no JM Studio aqui: ' + enrollmentLink)}`, '_blank')} className="bg-emerald-600 text-white font-black py-3 px-6 rounded-xl flex items-center justify-center gap-2 text-xs uppercase transition-all hover:bg-emerald-500">
+              <button type="button" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Olá! Faça sua matrícula no JM Studio aqui: ' + enrollmentLink)}`, '_blank')} className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-8 py-4 rounded-2xl flex items-center justify-center gap-3 text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-emerald-900/30">
                 <Share2 className="w-4 h-4" /> Enviar WhatsApp
               </button>
             </div>
@@ -135,103 +134,130 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ students, onAddStud
         </div>
       )}
 
-      <div className="bg-slate-900 border border-slate-800 rounded-[3rem] shadow-2xl overflow-hidden">
-        <div className="bg-slate-800/20 p-8 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="bg-blue-600 p-4 rounded-3xl">
-              {editingStudent ? <Edit3 className="text-white w-8 h-8" /> : <UserPlus className="text-white w-8 h-8" />}
+      <div className="bg-slate-900 border border-slate-800 rounded-[3.5rem] shadow-2xl overflow-hidden relative">
+        <div className="bg-slate-800/20 p-10 md:p-12 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <div className="bg-blue-600 p-5 rounded-[2rem] shadow-xl shadow-blue-900/30">
+              {editingStudent ? <Edit3 className="text-white w-10 h-10" /> : <UserPlus className="text-white w-10 h-10" />}
             </div>
             <div>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tighter">
-                {editingStudent ? 'Editar Cadastro' : 'Novo Aluno'}
+              <h2 className="text-4xl font-black text-white uppercase tracking-tighter">
+                {editingStudent ? 'Atualizar Perfil' : 'Registro de Aluno'}
               </h2>
-              <p className="text-slate-500 text-sm font-bold uppercase tracking-widest">
-                Preencha os dados do aluno abaixo
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
+                <Hash className="w-4 h-4 text-blue-500" /> Dados cadastrais e financeiros
               </p>
             </div>
           </div>
           {editingStudent && onCancel && (
-            <button type="button" onClick={onCancel} className="p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl text-slate-400 transition-all">
-              <X />
+            <button type="button" onClick={onCancel} className="p-5 bg-slate-800 hover:bg-slate-700 rounded-2xl text-slate-400 transition-all active:scale-90">
+              <X className="w-7 h-7" />
             </button>
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10">
+        <form onSubmit={handleSubmit} className="p-10 md:p-14 space-y-12">
           {success && (
-            <div className="p-6 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 rounded-2xl flex items-center gap-4 animate-in zoom-in duration-300">
-              <CheckCircle2 className="w-6 h-6" />
-              <span className="font-black text-xs uppercase tracking-widest">Cadastro salvo com sucesso!</span>
+            <div className="p-8 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 rounded-3xl flex items-center gap-6 animate-in zoom-in duration-500">
+              <div className="bg-emerald-500 p-2 rounded-lg"><CheckCircle2 className="w-6 h-6 text-white" /></div>
+              <span className="font-black text-sm uppercase tracking-widest">Informações processadas com sucesso!</span>
             </div>
           )}
 
           {error && (
-            <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-500 rounded-2xl flex items-center gap-3">
-              <AlertCircle className="w-5 h-5" />
-              <span className="font-bold text-xs uppercase">{error}</span>
+            <div className="p-6 bg-rose-500/10 border border-rose-500/30 text-rose-500 rounded-2xl flex items-center gap-4">
+              <AlertCircle className="w-6 h-6" />
+              <span className="font-black text-xs uppercase tracking-widest">{error}</span>
             </div>
           )}
 
-          {/* Seção Dados Básicos */}
-          <div className="space-y-6">
-            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2"><User className="w-3 h-3" /> Identificação</h3>
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Nome Completo *</label>
-              <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-5 text-white font-bold focus:border-blue-600 outline-none transition-all shadow-inner" placeholder="Ex: João Silva" />
+          {/* Seção Identificação */}
+          <div className="space-y-8">
+            <h3 className="text-[11px] font-black text-slate-600 uppercase tracking-[0.5em] flex items-center gap-3"><User className="w-4 h-4 text-blue-500" /> Identificação Master</h3>
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Nome Completo do Aluno *</label>
+              <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-3xl px-8 py-6 text-white font-bold text-lg focus:border-blue-600 outline-none transition-all shadow-inner" placeholder="Nome Completo" />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* CAMPO TELEFONE EM DESTAQUE */}
-              <div className="space-y-3 p-4 bg-emerald-500/5 rounded-[2rem] border border-emerald-500/20">
-                <label className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
-                  <Phone className="w-3 h-3" /> Telefone / WhatsApp *
+              <div className="space-y-4 p-8 bg-blue-600/5 rounded-[2.5rem] border-2 border-blue-600/20 group hover:border-blue-500/40 transition-all">
+                <label className="text-[11px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-3">
+                  <Phone className="w-4 h-4" /> Telefone para Contato *
                 </label>
-                <input type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-slate-950 border border-emerald-500/30 rounded-2xl px-6 py-5 text-emerald-400 font-black focus:border-emerald-500 outline-none transition-all" placeholder="(00) 00000-0000" />
+                <input 
+                  type="tel" required value={formData.phone} 
+                  onChange={e => setFormData({...formData, phone: e.target.value})} 
+                  className="w-full bg-slate-950 border border-blue-900/50 rounded-2xl px-8 py-6 text-blue-400 font-black text-xl focus:border-blue-500 outline-none transition-all placeholder:text-blue-900/30" 
+                  placeholder="(00) 00000-0000" 
+                />
               </div>
               
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Data de Nascimento *</label>
-                <input type="date" required value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-5 text-white font-bold focus:border-blue-600 outline-none transition-all" />
+              <div className="space-y-4 p-8 bg-slate-800/20 rounded-[2.5rem] border border-slate-800">
+                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-3">
+                  <Calendar className="w-4 h-4" /> Data de Nascimento *
+                </label>
+                <input type="date" required value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-8 py-6 text-white font-bold text-lg focus:border-blue-600 outline-none transition-all" />
               </div>
             </div>
           </div>
 
           {/* Seção Plano Financeiro */}
-          <div className="space-y-6">
-            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2"><DollarSign className="w-3 h-3" /> Plano e Pagamento</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-8">
+            <h3 className="text-[11px] font-black text-slate-600 uppercase tracking-[0.5em] flex items-center gap-3"><DollarSign className="w-4 h-4 text-emerald-500" /> Engenharia Financeira</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* CAMPO VALOR EM DESTAQUE */}
-              <div className="space-y-3 p-4 bg-blue-500/5 rounded-[2rem] border border-blue-500/20 md:col-span-1">
-                <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                  <DollarSign className="w-3 h-3" /> Valor Mensalidade *
+              <div className="space-y-4 p-8 bg-emerald-500/5 rounded-[2.5rem] border-2 border-emerald-500/20 group hover:border-emerald-500/40 transition-all md:col-span-1">
+                <label className="text-[11px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-3">
+                  <DollarSign className="w-4 h-4" /> Valor da Mensalidade *
                 </label>
                 <div className="relative">
-                   <span className="absolute left-6 top-1/2 -translate-y-1/2 text-blue-500 font-black">R$</span>
-                   <input type="number" step="0.01" required value={formData.monthlyFee} onChange={e => setFormData({...formData, monthlyFee: e.target.value})} className="w-full bg-slate-950 border border-blue-500/30 rounded-2xl pl-14 pr-6 py-5 text-white font-black text-2xl focus:border-blue-500 outline-none transition-all" placeholder="0,00" />
+                   <span className="absolute left-8 top-1/2 -translate-y-1/2 text-emerald-500 font-black text-xl">R$</span>
+                   <input 
+                    type="number" step="0.01" required value={formData.monthlyFee} 
+                    onChange={e => setFormData({...formData, monthlyFee: e.target.value})} 
+                    className="w-full bg-slate-950 border border-emerald-900/50 rounded-2xl pl-16 pr-8 py-6 text-white font-black text-3xl focus:border-emerald-500 outline-none transition-all" 
+                    placeholder="0,00" 
+                   />
                 </div>
               </div>
               
-              <div className="space-y-3 pt-4">
-                <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Dia de Vencimento *</label>
-                <input type="number" required min="1" max="31" value={formData.billingDay} onChange={e => setFormData({...formData, billingDay: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-5 text-white font-black text-xl focus:border-amber-600 outline-none transition-all" />
+              <div className="space-y-4 p-8 bg-slate-800/20 rounded-[2.5rem] border border-slate-800">
+                <label className="text-[11px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-3">
+                  <CalendarDays className="w-4 h-4" /> Dia de Vencimento *
+                </label>
+                <input type="number" required min="1" max="31" value={formData.billingDay} onChange={e => setFormData({...formData, billingDay: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-8 py-6 text-white font-black text-3xl focus:border-amber-600 outline-none transition-all text-center" />
               </div>
               
-              <div className="space-y-3 pt-4">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Início das Aulas</label>
-                <input type="date" value={formData.joinDate} onChange={e => setFormData({...formData, joinDate: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-5 text-white font-bold focus:border-blue-600 outline-none transition-all" />
+              <div className="space-y-4 p-8 bg-slate-800/20 rounded-[2.5rem] border border-slate-800">
+                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-3">
+                  <Clock className="w-4 h-4" /> Início das Atividades
+                </label>
+                <input type="date" value={formData.joinDate} onChange={e => setFormData({...formData, joinDate: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-8 py-6 text-white font-bold text-lg focus:border-blue-600 outline-none transition-all" />
               </div>
             </div>
 
-            <div className="space-y-4 pt-4">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Escolha a Turma (Horário) *</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className="space-y-6 pt-6">
+              <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-3">
+                <Users className="w-4 h-4 text-blue-500" /> Alocação de Turma (Horário Selecionado) *
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {CLASS_HOURS.map(h => {
                   const status = getStatusInfo(h);
                   const isSelected = formData.classTime === h;
                   return (
-                    <button key={h} type="button" disabled={status.disabled} onClick={() => setFormData({...formData, classTime: h})} className={`p-4 rounded-2xl border transition-all text-left ${status.disabled ? 'opacity-30 cursor-not-allowed bg-slate-950 border-slate-900' : isSelected ? 'bg-blue-600 border-blue-400 text-white shadow-xl scale-[1.05] z-10' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}`}>
-                      <p className="text-sm font-black">{h}</p>
-                      <p className={`text-[8px] font-black uppercase mt-1 ${isSelected ? 'text-blue-100' : status.color.split(' ')[0]}`}>{status.label}</p>
+                    <button 
+                      key={h} type="button" disabled={status.disabled} 
+                      onClick={() => setFormData({...formData, classTime: h})} 
+                      className={`p-6 rounded-[2rem] border-2 transition-all text-left group relative overflow-hidden ${
+                        status.disabled ? 'opacity-20 cursor-not-allowed bg-slate-950 border-slate-900' : 
+                        isSelected ? 'bg-blue-600 border-blue-400 text-white shadow-2xl scale-[1.05] z-10' : 
+                        'bg-slate-950 border-slate-800 hover:border-slate-700'
+                      }`}
+                    >
+                      <p className="text-xl font-black tracking-tighter">{h}</p>
+                      <p className={`text-[9px] font-black uppercase mt-1 tracking-widest ${isSelected ? 'text-blue-100' : status.color.split(' ')[0]}`}>{status.label}</p>
+                      {isSelected && <div className="absolute -right-2 -top-2 bg-white text-blue-600 p-1.5 rounded-full shadow-lg"><CheckCircle2 className="w-3 h-3" /></div>}
                     </button>
                   );
                 })}
@@ -239,19 +265,19 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ students, onAddStud
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
-            <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-black py-6 rounded-[2rem] transition-all shadow-2xl shadow-blue-900/40 uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-4 active:scale-95">
-              <Save className="w-6 h-6" />
-              {editingStudent ? 'Atualizar Aluno' : 'Confirmar Matrícula'}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-10">
+            <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-black py-8 rounded-[2.5rem] transition-all shadow-2xl shadow-blue-900/50 uppercase tracking-[0.3em] text-sm flex items-center justify-center gap-5 active:scale-95 group">
+              <Save className="w-7 h-7 group-hover:rotate-12 transition-transform" />
+              {editingStudent ? 'Salvar Alterações' : 'Concluir Cadastro Master'}
             </button>
             {editingStudent && onDeleteStudent && (
               <button 
                 type="button" 
                 onClick={() => onDeleteStudent(editingStudent.id)}
-                className="bg-rose-900/20 hover:bg-rose-600 text-rose-500 hover:text-white font-black py-6 rounded-[2rem] border border-rose-500/30 transition-all uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-4 active:scale-95"
+                className="bg-slate-950 hover:bg-rose-600 text-rose-500 hover:text-white font-black py-8 rounded-[2.5rem] border border-rose-500/20 transition-all uppercase tracking-[0.3em] text-sm flex items-center justify-center gap-5 active:scale-95 shadow-xl"
               >
-                <Trash2 className="w-6 h-6" />
-                Excluir Definitivamente
+                <Trash2 className="w-7 h-7" />
+                Excluir Cadastro
               </button>
             )}
           </div>

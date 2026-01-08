@@ -14,7 +14,7 @@ import PublicEnrollment from './components/PublicEnrollment';
 import PaymentsView from './components/PaymentsView';
 import StudentsView from './components/StudentsView';
 import { AppSection, Student, Teacher, ThemeSettings, StudentStatus } from './types';
-import { Menu, X, Database, Download, Save, FileSpreadsheet, Trash2, Upload, Users } from 'lucide-react';
+import { Menu, X, Database, Download, Save, FileSpreadsheet, Trash2, Upload, Users, Weight } from 'lucide-react';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -149,7 +149,7 @@ const App: React.FC = () => {
       case AppSection.PAGAMENTOS: 
         return <PaymentsView students={students} onUpdateStudent={handleUpdateStudent} onEditStudent={handleEditStudent} />;
       case AppSection.FINANCEIRO: return <FinancialControl students={students} onUpdateStudent={handleUpdateStudent} />;
-      case AppSection.TREINO: return <WorkoutPlanner students={students} />;
+      case AppSection.TREINO: return <WorkoutPlanner students={students} onUpdateStudent={handleUpdateStudent} />;
       case AppSection.CALENDARIO: return <CalendarView students={students} />;
       case AppSection.RELATORIOS: return <ReportsView students={students} />;
       case AppSection.PROFESSORES:
@@ -161,16 +161,19 @@ const App: React.FC = () => {
         />;
       case AppSection.CONFIGURACAO: 
         return (
-          <div className="max-w-2xl mx-auto space-y-6 pb-20">
-             <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-10 shadow-2xl">
-              <div className="flex items-center gap-4 mb-8">
-                <Database className="w-8 h-8 text-blue-500" />
-                <h2 className="text-xl font-black text-white uppercase tracking-tighter">Sistema e Dados</h2>
+          <div className="max-w-2xl mx-auto space-y-8 pb-20 animate-in fade-in duration-700">
+             <div className="bg-slate-900 border border-slate-800 rounded-[3rem] p-12 shadow-2xl relative overflow-hidden">
+              <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-600/5 blur-[50px] rounded-full" />
+              <div className="flex items-center gap-6 mb-10">
+                <div className="bg-blue-600 p-4 rounded-2xl shadow-lg shadow-blue-900/40">
+                  <Database className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Backup e Infra</h2>
               </div>
               
               <div className="space-y-4">
-                <button onClick={exportStudentsCSV} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20">
-                  <Users className="w-6 h-6" /> Exportar Lista de Alunos (CSV)
+                <button onClick={exportStudentsCSV} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-6 rounded-2xl flex items-center justify-center gap-4 transition-all shadow-xl shadow-blue-900/20 uppercase text-xs tracking-widest">
+                  <Users className="w-6 h-6" /> Exportar Alunos (Excel/CSV)
                 </button>
                 <button onClick={() => {
                   const data = JSON.stringify({students, teachers});
@@ -180,8 +183,8 @@ const App: React.FC = () => {
                   a.href = url;
                   a.download = `backup_jm_studio_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`;
                   a.click();
-                }} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all">
-                  <Download className="w-5 h-5" /> Exportar Backup (.json)
+                }} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-4 transition-all uppercase text-xs tracking-widest">
+                  <Download className="w-5 h-5" /> Criar Backup Completo
                 </button>
                 
                 <input type="file" ref={importFileRef} onChange={(e) => {
@@ -210,12 +213,14 @@ const App: React.FC = () => {
                    }
                 }} accept=".json" className="hidden" />
                 
-                <button onClick={() => importFileRef.current?.click()} className="w-full bg-slate-800/50 hover:bg-slate-800 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-slate-700/50">
-                  <Upload className="w-5 h-5" /> Importar Backup
+                <button onClick={() => importFileRef.current?.click()} className="w-full bg-slate-800/50 hover:bg-slate-800 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-4 transition-all border border-slate-700/50 uppercase text-xs tracking-widest">
+                  <Upload className="w-5 h-5" /> Restaurar de Backup
                 </button>
-                <button onClick={() => { if (confirm("Deseja apagar TODOS os dados do sistema? Esta ação é irreversível.")) { localStorage.clear(); window.location.reload(); } }} className="w-full bg-rose-900/20 hover:bg-rose-600 text-rose-500 hover:text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all border border-rose-500/20">
-                  <Trash2 className="w-5 h-5" /> Resetar Sistema
-                </button>
+                <div className="pt-6 border-t border-slate-800 mt-6">
+                  <button onClick={() => { if (confirm("Deseja apagar TODOS os dados do sistema? Esta ação é irreversível.")) { localStorage.clear(); window.location.reload(); } }} className="w-full bg-rose-900/10 hover:bg-rose-600 text-rose-500 hover:text-white font-black py-5 rounded-2xl flex items-center justify-center gap-4 transition-all border border-rose-500/20 uppercase text-xs tracking-widest">
+                    <Trash2 className="w-5 h-5" /> Limpar Todo o Sistema
+                  </button>
+                </div>
               </div>
              </div>
           </div>
@@ -228,14 +233,21 @@ const App: React.FC = () => {
   if (!isAuthenticated) return <><style dangerouslySetInnerHTML={{ __html: themeStyles }} /><Login onLogin={() => { setIsAuthenticated(true); localStorage.setItem('jm_studio_auth', 'true'); }} currentTheme={theme} onThemePreview={setTheme} /></>;
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-slate-950">
+    <div className="min-h-screen flex flex-col md:flex-row bg-slate-950 text-slate-200">
       <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
-      <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800 sticky top-0 z-[150]">
-        <div className="flex items-center gap-2"><div className="bg-blue-600 p-1.5 rounded-lg text-white font-black text-xs">JM</div><span className="text-white font-black text-xs uppercase tracking-widest">JM Studio</span></div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-slate-400">{isMobileMenuOpen ? <X /> : <Menu />}</button>
+      <div className="md:hidden flex items-center justify-between p-6 bg-slate-900 border-b border-slate-800 sticky top-0 z-[150] shadow-2xl">
+        <div className="flex items-center gap-3">
+          <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-900/40">
+            <Weight className="w-5 h-5" />
+          </div>
+          <span className="text-white font-black text-sm uppercase tracking-[0.2em]">JM STUDIO</span>
+        </div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-3 bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-all active:scale-90">
+          {isMobileMenuOpen ? <X /> : <Menu />}
+        </button>
       </div>
       <Sidebar activeSection={activeSection} setActiveSection={(s) => { setActiveSection(s); setIsMobileMenuOpen(false); if (s !== AppSection.CADASTRO) setEditingStudent(null); }} onLogout={() => { setIsAuthenticated(false); localStorage.removeItem('jm_studio_auth'); }} isOpen={isMobileMenuOpen} canInstall={!!installPrompt} onInstall={() => installPrompt?.prompt()} />
-      <main className="flex-1 md:ml-64 p-4 md:p-10">{renderSection()}</main>
+      <main className="flex-1 md:ml-64 p-6 md:p-12 overflow-x-hidden">{renderSection()}</main>
     </div>
   );
 };
