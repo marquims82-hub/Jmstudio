@@ -92,7 +92,7 @@ const PublicEnrollment: React.FC<PublicEnrollmentProps> = ({ students, onAddStud
               <span className="text-blue-500">JM STUDIO</span>
             </h1>
             <p className="text-slate-400 text-lg leading-relaxed">
-              Realize sua pré-matrícula online. O formulário é rápido e garante sua reserva em nossas turmas exclusivas de personal trainer.
+              Realize sua pré-matrícula online. O formulário é rápido e garante sua reserva em nossas turmas .
             </p>
           </div>
 

@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { UserPlus, Save, Phone, DollarSign, User, Calendar, Clock, CheckCircle2, AlertCircle, QrCode, Copy, Share2, X, Edit3, Trash2, CalendarDays, Hash, Users } from 'lucide-react';
+import { UserPlus, Save, Phone, DollarSign, User, Calendar, Clock, CheckCircle2, AlertCircle, QrCode, Copy, Share2, X, Edit3, Trash2, CalendarDays, Hash, Users, ShieldCheck } from 'lucide-react';
 import { Student, CLASS_HOURS, StudentStatus } from '../types';
 
 interface RegistrationFormProps {
@@ -61,7 +61,8 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ students, onAddStud
   }, []);
 
   const getOccupancy = (time: string) => {
-    return students.filter(s => s.classTime === time && s.id !== editingStudent?.id).length;
+    // APENAS ALUNOS ATIVOS OCUPAM VAGAS
+    return students.filter(s => s.classTime === time && s.status === StudentStatus.ATIVO && s.id !== editingStudent?.id).length;
   };
 
   const getStatusInfo = (time: string) => {
@@ -171,16 +172,37 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ students, onAddStud
             </div>
           )}
 
-          {/* Seção Identificação */}
           <div className="space-y-8">
             <h3 className="text-[11px] font-black text-slate-600 uppercase tracking-[0.5em] flex items-center gap-3"><User className="w-4 h-4 text-blue-500" /> Identificação Master</h3>
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Nome Completo do Aluno *</label>
-              <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-3xl px-8 py-6 text-white font-bold text-lg focus:border-blue-600 outline-none transition-all shadow-inner" placeholder="Nome Completo" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+               <div className="md:col-span-2 space-y-4">
+                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Nome Completo do Aluno *</label>
+                 <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-3xl px-8 py-6 text-white font-bold text-lg focus:border-blue-600 outline-none transition-all shadow-inner" placeholder="Nome Completo" />
+               </div>
+
+               <div className="space-y-4">
+                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Status do Aluno</label>
+                 <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-800 h-[76px]">
+                   {[StudentStatus.ATIVO, StudentStatus.INATIVO].map((status) => (
+                     <button
+                       key={status}
+                       type="button"
+                       onClick={() => setFormData({...formData, status})}
+                       className={`flex-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                         formData.status === status 
+                           ? status === StudentStatus.ATIVO ? 'bg-emerald-600 text-white shadow-lg' : 'bg-rose-600 text-white shadow-lg'
+                           : 'text-slate-500 hover:text-slate-400'
+                       }`}
+                     >
+                       {status}
+                     </button>
+                   ))}
+                 </div>
+               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* CAMPO TELEFONE EM DESTAQUE */}
               <div className="space-y-4 p-8 bg-blue-600/5 rounded-[2.5rem] border-2 border-blue-600/20 group hover:border-blue-500/40 transition-all">
                 <label className="text-[11px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-3">
                   <Phone className="w-4 h-4" /> Telefone para Contato *
@@ -202,11 +224,9 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ students, onAddStud
             </div>
           </div>
 
-          {/* Seção Plano Financeiro */}
           <div className="space-y-8">
             <h3 className="text-[11px] font-black text-slate-600 uppercase tracking-[0.5em] flex items-center gap-3"><DollarSign className="w-4 h-4 text-emerald-500" /> Engenharia Financeira</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* CAMPO VALOR EM DESTAQUE */}
               <div className="space-y-4 p-8 bg-emerald-500/5 rounded-[2.5rem] border-2 border-emerald-500/20 group hover:border-emerald-500/40 transition-all md:col-span-1">
                 <label className="text-[11px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-3">
                   <DollarSign className="w-4 h-4" /> Valor da Mensalidade *

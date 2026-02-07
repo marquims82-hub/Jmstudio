@@ -25,9 +25,15 @@ const Dashboard: React.FC<DashboardProps> = ({ students = [], setActiveSection, 
 
   const CAPACITY_PER_CLASS = 12;
   const totalCapacity = (CLASS_HOURS?.length || 0) * CAPACITY_PER_CLASS;
+  
+  // ALUNOS ATIVOS TOTAIS
   const activeCount = students?.filter(s => s.status === StudentStatus.ATIVO).length || 0;
+  
+  // ALUNOS QUE ESTÃO EM TURMAS (PARA CÁLCULO DE OCUPAÇÃO)
+  const studentsInClasses = students?.filter(s => s.status === StudentStatus.ATIVO && s.classTime && s.classTime !== '').length || 0;
+  
   const totalRevenue = students?.filter(s => s.status === StudentStatus.ATIVO).reduce((sum, s) => sum + (s.monthlyFee || 0), 0) || 0;
-  const occupancyRate = totalCapacity > 0 ? Math.round((activeCount / totalCapacity) * 100) : 0;
+  const occupancyRate = totalCapacity > 0 ? Math.round((studentsInClasses / totalCapacity) * 100) : 0;
   
   const hasPaidCurrentMonth = (student: Student) => {
     return student.payments?.some(p => p.month === currentMonth && p.year === currentYear && p.status === 'paid');
@@ -90,7 +96,6 @@ const Dashboard: React.FC<DashboardProps> = ({ students = [], setActiveSection, 
         )}
       </header>
 
-      {/* Grid de KPIs Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-slate-900/60 border border-slate-800 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 opacity-5 group-hover:opacity-10 transition-all"><Users className="w-24 h-24 text-blue-500" /></div>

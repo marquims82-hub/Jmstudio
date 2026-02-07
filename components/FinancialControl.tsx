@@ -2,12 +2,12 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { 
   DollarSign, ArrowUpCircle, ArrowDownCircle, Search, CheckCircle2, 
-  AlertCircle, X, Plus, Receipt, Save, Paperclip, Eye, Download, 
-  Trash2, Edit2, History, User, Users, Wallet, Calendar, 
-  ChevronLeft, ChevronRight, Printer, FileText, TrendingUp, 
-  TrendingDown, MessageSquare, ExternalLink
+  AlertCircle, X, Plus, Receipt, Save, Paperclip, Eye, 
+  Trash2, Edit2, History, Users, Wallet, Calendar, 
+  ChevronLeft, ChevronRight, FileText, TrendingUp, 
+  TrendingDown, MessageSquare, Camera, Printer, FileCheck
 } from 'lucide-react';
-import { Student, StudentStatus, MONTHS_LABELS, Expense, PaymentRecord } from '../types';
+import { Student, StudentStatus, MONTHS_LABELS, Expense } from '../types';
 
 interface FinancialControlProps {
   students: Student[];
@@ -22,9 +22,9 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [historyStudent, setHistoryStudent] = useState<Student | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const expenseFileRef = useRef<HTMLInputElement>(null);
   const [uploadingForStudentId, setUploadingForStudentId] = useState<string | null>(null);
   
-  // Estado para navegação de data
   const [viewDate, setViewDate] = useState(new Date());
   const currentMonth = viewDate.getMonth();
   const currentYear = viewDate.getFullYear();
@@ -38,7 +38,8 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
     description: '',
     amount: '',
     category: 'outros' as Expense['category'],
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    receipt: ''
   });
 
   const saveExpenses = (newExps: Expense[]) => {
@@ -49,7 +50,14 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
   const handleAddOrUpdateExpense = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingExpense) {
-      const updated = expenses.map(ex => ex.id === editingExpense.id ? { ...editingExpense, description: newExpense.description, amount: parseFloat(newExpense.amount), date: newExpense.date, category: newExpense.category } : ex);
+      const updated = expenses.map(ex => ex.id === editingExpense.id ? { 
+        ...editingExpense, 
+        description: newExpense.description, 
+        amount: parseFloat(newExpense.amount), 
+        date: newExpense.date, 
+        category: newExpense.category,
+        receipt: newExpense.receipt || editingExpense.receipt
+      } : ex);
       saveExpenses(updated);
     } else {
       const exp: Expense = {
@@ -57,7 +65,8 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
         description: newExpense.description,
         amount: parseFloat(newExpense.amount),
         date: newExpense.date,
-        category: newExpense.category
+        category: newExpense.category,
+        receipt: newExpense.receipt
       };
       saveExpenses([...expenses, exp]);
     }
@@ -67,26 +76,36 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
   const closeExpenseModal = () => {
     setIsExpenseModalOpen(false);
     setEditingExpense(null);
-    setNewExpense({ description: '', amount: '', category: 'outros', date: new Date().toISOString().split('T')[0] });
+    setNewExpense({ description: '', amount: '', category: 'outros', date: new Date().toISOString().split('T')[0], receipt: '' });
   };
 
-  // Adiciona handleEditExpense para preencher o formulário com os dados da despesa existente para edição
   const handleEditExpense = (exp: Expense) => {
     setEditingExpense(exp);
     setNewExpense({
       description: exp.description,
       amount: exp.amount.toString(),
       category: exp.category,
-      date: exp.date
+      date: exp.date,
+      receipt: exp.receipt || ''
     });
     setIsExpenseModalOpen(true);
   };
 
-  // Adiciona handleDeleteExpense para remover uma despesa da lista e persistir a alteração
   const handleDeleteExpense = (id: string) => {
     if (window.confirm('Excluir esta despesa permanentemente?')) {
       const updated = expenses.filter(ex => ex.id !== id);
       saveExpenses(updated);
+    }
+  };
+
+  const handleExpenseFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewExpense({ ...newExpense, receipt: reader.result as string });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -103,7 +122,12 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
       if (!confirm(`Remover registro de pagamento de ${student.name} para ${MONTHS_LABELS[currentMonth]}?`)) return;
       newPayments = newPayments.filter(p => !(p.month === currentMonth && p.year === currentYear));
     } else {
-      newPayments.push({ month: currentMonth, year: currentYear, status: 'paid' });
+      newPayments.push({ 
+        month: currentMonth, 
+        year: currentYear, 
+        status: 'paid',
+        paymentDate: new Date().toISOString() 
+      });
     }
 
     onUpdateStudent({
@@ -111,6 +135,58 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
       payments: newPayments,
       status: !paid ? StudentStatus.ATIVO : student.status
     });
+  };
+
+  const handleGenerateReceipt = (student: Student) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const todayStr = new Date().toLocaleDateString('pt-BR');
+    const monthYear = `${MONTHS_LABELS[currentMonth]} / ${currentYear}`;
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Recibo - ${student.name}</title>
+          <style>
+            body { font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; }
+            .receipt-container { max-width: 600px; margin: 0 auto; border: 2px solid #e2e8f0; padding: 40px; border-radius: 20px; position: relative; }
+            .header { text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; }
+            .header h1 { margin: 0; color: #1e293b; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+            .header span { color: #3b82f6; font-weight: 900; }
+            .content { line-height: 1.8; font-size: 16px; }
+            .value-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; font-weight: 900; font-size: 20px; margin: 20px 0; text-align: right; color: #10b981; }
+            .footer { margin-top: 50px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 12px; color: #64748b; }
+            .signature { margin-top: 40px; border-top: 1px solid #1e293b; display: inline-block; min-width: 250px; padding-top: 10px; font-weight: bold; }
+            @media print { .no-print { display: none; } }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-container">
+            <div class="header">
+              <h1>JM STUDIO <span>PERSONAL</span></h1>
+              <p>Comprovante de Pagamento de Mensalidade</p>
+            </div>
+            <div class="content">
+              <p>Recebemos de <strong>${student.name.toUpperCase()}</strong>,</p>
+              <p>A importância de:</p>
+              <div class="value-box">R$ ${student.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <p>Referente ao mês de <strong>${monthYear}</strong>.</p>
+              <p>Pago em: ${todayStr}</p>
+            </div>
+            <div style="text-align: center; margin-top: 60px;">
+              <div class="signature">JM STUDIO PERSONAL</div>
+            </div>
+            <div class="footer">
+              Este recibo é emitido digitalmente via JM Studio System.<br/>
+              Data de Emissão: ${todayStr} às ${new Date().toLocaleTimeString()}
+            </div>
+          </div>
+          <script>window.onload = () => { window.print(); }</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   const filteredStudents = useMemo(() => 
@@ -140,79 +216,6 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
   
   const pendingCount = students.filter(s => s.status === StudentStatus.ATIVO && !isPaid(s)).length;
 
-  const handlePrintMonthlyReport = () => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const netProfit = totalRevenueActual - totalExpenses;
-    const reportDate = `${MONTHS_LABELS[currentMonth]} / ${currentYear}`;
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Relatório Financeiro - ${reportDate}</title>
-          <style>
-            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; }
-            .header { border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
-            .title { font-size: 24px; font-weight: 800; color: #1e40af; }
-            .stats { display: grid; grid-template-cols: 1fr 1fr 1fr; gap: 20px; margin-bottom: 40px; }
-            .stat-card { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
-            .stat-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
-            .stat-value { font-size: 20px; font-weight: 800; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { text-align: left; padding: 12px; font-size: 10px; background: #f1f5f9; text-transform: uppercase; }
-            td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
-            .footer { margin-top: 50px; font-size: 10px; color: #94a3b8; text-align: center; }
-            .positive { color: #10b981; }
-            .negative { color: #f43f5e; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="title">JM STUDIO PERSONAL</div>
-            <div style="font-size: 14px; font-weight: 600; color: #64748b;">FECHAMENTO FINANCEIRO - ${reportDate}</div>
-          </div>
-          
-          <div class="stats">
-            <div class="stat-card">
-              <div class="stat-label">Total Recebido</div>
-              <div class="stat-value positive">R$ ${totalRevenueActual.toLocaleString()}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Total Despesas</div>
-              <div class="stat-value negative">R$ ${totalExpenses.toLocaleString()}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Lucro Líquido</div>
-              <div class="stat-value ${netProfit >= 0 ? 'positive' : 'negative'}">R$ ${netProfit.toLocaleString()}</div>
-            </div>
-          </div>
-
-          <h3>Detalhamento de Despesas</h3>
-          <table>
-            <thead>
-              <tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th></tr>
-            </thead>
-            <tbody>
-              ${currentMonthExpenses.map(ex => `
-                <tr>
-                  <td>${new Date(ex.date).toLocaleDateString()}</td>
-                  <td>${ex.description}</td>
-                  <td>${ex.category}</td>
-                  <td class="negative">R$ ${ex.amount.toLocaleString()}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-
-          <div class="footer">Relatório gerado em ${new Date().toLocaleString()} • JM Studio Intelligence</div>
-          <script>window.print();</script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
-
   const getCategoryIcon = (category: Expense['category']) => {
     switch(category) {
       case 'aluguel': return '🏠';
@@ -233,7 +236,6 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 relative pb-20">
-      {/* Modais e Hidden Inputs mantidos conforme estrutura original */}
       <input type="file" ref={fileInputRef} onChange={(e) => {
         const file = e.target.files?.[0];
         if (file && uploadingForStudentId && onUpdateStudent) {
@@ -246,7 +248,7 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
               if (pIdx > -1) {
                 payments[pIdx].receipt = reader.result as string;
               } else {
-                payments.push({ month: currentMonth, year: currentYear, status: 'paid', receipt: reader.result as string });
+                payments.push({ month: currentMonth, year: currentYear, status: 'paid', receipt: reader.result as string, paymentDate: new Date().toISOString() });
               }
               onUpdateStudent({ ...student, payments });
               setUploadingForStudentId(null);
@@ -255,6 +257,8 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
           reader.readAsDataURL(file);
         }
       }} className="hidden" accept="image/*" />
+
+      <input type="file" ref={expenseFileRef} onChange={handleExpenseFileUpload} className="hidden" accept="image/*" />
 
       {viewingReceipt && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-in fade-in duration-300">
@@ -295,18 +299,9 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
               <ArrowDownCircle className="w-4 h-4" /> Despesas
             </button>
           </div>
-
-          <button 
-            onClick={handlePrintMonthlyReport}
-            className="p-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl transition-all shadow-xl active:scale-90"
-            title="Gerar Relatório do Mês"
-          >
-            <Printer className="w-5 h-5" />
-          </button>
         </div>
       </header>
 
-      {/* Dashboard de KPIs Aprimorado */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <div className="bg-slate-900/60 border border-emerald-500/20 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 opacity-5 group-hover:opacity-10 transition-all"><TrendingUp className="w-24 h-24 text-emerald-500" /></div>
@@ -384,12 +379,24 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
                         <h4 className="text-lg font-black text-white truncate uppercase tracking-tight">{student.name}</h4>
                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{student.classTime}</p>
                       </div>
-                      <button 
-                        onClick={() => setHistoryStudent(student)}
-                        className="p-3 bg-slate-800/50 text-slate-400 hover:text-white rounded-xl transition-all"
-                      >
-                        <History className="w-4 h-4" />
-                      </button>
+                      <div className="flex gap-1">
+                        <button 
+                          onClick={() => setHistoryStudent(student)}
+                          className="p-3 bg-slate-800/50 text-slate-400 hover:text-white rounded-xl transition-all"
+                          title="Histórico"
+                        >
+                          <History className="w-4 h-4" />
+                        </button>
+                        {paid && (
+                          <button 
+                            onClick={() => handleGenerateReceipt(student)}
+                            className="p-3 bg-emerald-600/10 text-emerald-500 hover:bg-emerald-600 hover:text-white rounded-xl transition-all"
+                            title="Emitir Recibo"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                    </div>
 
                    <div className="grid grid-cols-2 gap-4 mb-8">
@@ -454,7 +461,10 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
                       {getCategoryIcon(exp.category)}
                    </div>
                    <div>
-                      <h4 className="text-lg font-black text-white uppercase tracking-tight">{exp.description}</h4>
+                      <h4 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+                        {exp.description}
+                        {exp.receipt && <Paperclip className="w-4 h-4 text-blue-500" />}
+                      </h4>
                       <div className="flex items-center gap-3 mt-1">
                          <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest px-2 py-0.5 bg-slate-800 rounded">{exp.category}</span>
                          <span className="text-[9px] font-bold text-slate-600">{new Date(exp.date).toLocaleDateString()}</span>
@@ -465,6 +475,9 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
                 <div className="flex items-center gap-8">
                    <p className="text-xl font-black text-rose-500">R$ {exp.amount.toLocaleString()}</p>
                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                      {exp.receipt && (
+                        <button onClick={() => setViewingReceipt(exp.receipt!)} className="p-3 bg-blue-600/10 text-blue-500 hover:bg-blue-600 hover:text-white rounded-xl transition-all"><Eye className="w-4 h-4" /></button>
+                      )}
                       <button onClick={() => handleEditExpense(exp)} className="p-3 bg-blue-600/10 text-blue-500 hover:bg-blue-600 hover:text-white rounded-xl transition-all"><Edit2 className="w-4 h-4" /></button>
                       <button onClick={() => handleDeleteExpense(exp.id)} className="p-3 bg-rose-600/10 text-rose-500 hover:bg-rose-600 hover:text-white rounded-xl transition-all"><Trash2 className="w-4 h-4" /></button>
                    </div>
@@ -481,7 +494,6 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
         </div>
       )}
 
-      {/* Reuso do Modal de Histórico e Despesa com refinamentos visuais */}
       {historyStudent && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
@@ -508,7 +520,7 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
                         <Calendar className="w-6 h-6 text-blue-500" />
                         <div>
                           <p className="text-white font-black text-lg uppercase tracking-tight">{MONTHS_LABELS[p.month]} {p.year}</p>
-                          <span className="text-[9px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded font-black uppercase tracking-widest">Pago</span>
+                          <span className="text-[9px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded font-black uppercase tracking-widest">Pago em {p.paymentDate ? new Date(p.paymentDate).toLocaleDateString() : 'N/A'}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -564,6 +576,30 @@ const FinancialControl: React.FC<FinancialControlProps> = ({ students, onUpdateS
                   <option value="outros">📦 Outros</option>
                 </select>
               </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Comprovante</label>
+                <div className="flex gap-4">
+                   <button 
+                    type="button" 
+                    onClick={() => expenseFileRef.current?.click()}
+                    className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 border ${newExpense.receipt ? 'bg-emerald-600/10 border-emerald-500/20 text-emerald-500' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'}`}
+                   >
+                     {newExpense.receipt ? <CheckCircle2 className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
+                     {newExpense.receipt ? 'Anexado' : 'Anexar Imagem'}
+                   </button>
+                   {newExpense.receipt && (
+                     <button 
+                      type="button" 
+                      onClick={() => setViewingReceipt(newExpense.receipt)}
+                      className="p-4 bg-blue-600 text-white rounded-2xl transition-all"
+                     >
+                       <Eye className="w-4 h-4" />
+                     </button>
+                   )}
+                </div>
+              </div>
+
               <button type="submit" className="w-full bg-blue-600 text-white font-black py-6 rounded-[2rem] shadow-xl shadow-blue-900/40 uppercase text-xs tracking-widest active:scale-95">
                 <Save className="w-5 h-5 inline mr-3" /> Salvar Despesa
               </button>

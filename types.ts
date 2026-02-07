@@ -27,6 +27,7 @@ export interface PaymentRecord {
   year: number;
   status: 'paid' | 'pending';
   receipt?: string;
+  paymentDate?: string;
 }
 
 export interface Expense {
@@ -35,6 +36,7 @@ export interface Expense {
   amount: number;
   date: string;
   category: 'aluguel' | 'energia' | 'manutencao' | 'marketing' | 'outros';
+  receipt?: string;
 }
 
 export interface WorkoutPlan {

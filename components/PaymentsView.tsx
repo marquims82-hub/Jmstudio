@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Search, CreditCard, CheckCircle2, MessageSquare, Edit2 } from 'lucide-react';
+import { Search, CreditCard, CheckCircle2, MessageSquare, Edit2, Printer } from 'lucide-react';
 import { Student, StudentStatus, MONTHS_LABELS } from '../types';
 
 interface PaymentsViewProps {
@@ -37,14 +37,70 @@ const PaymentsView: React.FC<PaymentsViewProps> = ({ students, onUpdateStudent, 
     if (paid) {
       newPayments = newPayments.filter(p => !(p.month === currentMonth && p.year === currentYear));
     } else {
-      newPayments.push({ month: currentMonth, year: currentYear, status: 'paid' });
+      newPayments.push({ 
+        month: currentMonth, 
+        year: currentYear, 
+        status: 'paid',
+        paymentDate: new Date().toISOString()
+      });
     }
 
-    // O status do aluno permanece o mesmo ao registrar pagamento (geralmente ATIVO)
     onUpdateStudent({
       ...student,
       payments: newPayments
     });
+  };
+
+  const handleGenerateReceipt = (student: Student) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const todayStr = new Date().toLocaleDateString('pt-BR');
+    const monthYear = `${MONTHS_LABELS[currentMonth]} / ${currentYear}`;
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Recibo - ${student.name}</title>
+          <style>
+            body { font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; }
+            .receipt-container { max-width: 600px; margin: 0 auto; border: 2px solid #e2e8f0; padding: 40px; border-radius: 20px; position: relative; }
+            .header { text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; }
+            .header h1 { margin: 0; color: #1e293b; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+            .header span { color: #3b82f6; font-weight: 900; }
+            .content { line-height: 1.8; font-size: 16px; }
+            .value-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; font-weight: 900; font-size: 20px; margin: 20px 0; text-align: right; color: #10b981; }
+            .footer { margin-top: 50px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 12px; color: #64748b; }
+            .signature { margin-top: 40px; border-top: 1px solid #1e293b; display: inline-block; min-width: 250px; padding-top: 10px; font-weight: bold; }
+            @media print { .no-print { display: none; } }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-container">
+            <div class="header">
+              <h1>JM STUDIO <span>PERSONAL</span></h1>
+              <p>Comprovante de Pagamento de Mensalidade</p>
+            </div>
+            <div class="content">
+              <p>Recebemos de <strong>${student.name.toUpperCase()}</strong>,</p>
+              <p>A importância de:</p>
+              <div class="value-box">R$ ${student.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <p>Referente ao mês de <strong>${monthYear}</strong>.</p>
+              <p>Pago em: ${todayStr}</p>
+            </div>
+            <div style="text-align: center; margin-top: 60px;">
+              <div class="signature">JM STUDIO PERSONAL</div>
+            </div>
+            <div class="footer">
+              Este recibo é emitido digitalmente via JM Studio System.<br/>
+              Data de Emissão: ${todayStr} às ${new Date().toLocaleTimeString()}
+            </div>
+          </div>
+          <script>window.onload = () => { window.print(); }</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   const handleWhatsApp = (student: Student) => {
@@ -85,9 +141,14 @@ const PaymentsView: React.FC<PaymentsViewProps> = ({ students, onUpdateStudent, 
                   <h4 className="text-xl font-black text-white truncate">{student.name}</h4>
                   <p className="text-xs text-slate-500 font-bold uppercase">{student.classTime}</p>
                 </div>
-                {onEditStudent && (
-                  <button onClick={() => onEditStudent(student)} className="p-2 text-slate-600 hover:text-white bg-slate-800/50 rounded-lg"><Edit2 className="w-4 h-4" /></button>
-                )}
+                <div className="flex gap-1">
+                  {paid && (
+                    <button onClick={() => handleGenerateReceipt(student)} className="p-2 text-emerald-500 hover:text-white bg-emerald-500/10 rounded-lg" title="Imprimir Recibo"><Printer className="w-4 h-4" /></button>
+                  )}
+                  {onEditStudent && (
+                    <button onClick={() => onEditStudent(student)} className="p-2 text-slate-600 hover:text-white bg-slate-800/50 rounded-lg"><Edit2 className="w-4 h-4" /></button>
+                  )}
+                </div>
               </div>
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between p-4 bg-slate-950/40 rounded-2xl">

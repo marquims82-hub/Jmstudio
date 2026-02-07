@@ -13,6 +13,8 @@ import Login from './components/Login';
 import PublicEnrollment from './components/PublicEnrollment';
 import PaymentsView from './components/PaymentsView';
 import StudentsView from './components/StudentsView';
+import OverdueAlert from './components/OverdueAlert';
+import BirthdayAlert from './components/BirthdayAlert';
 import { AppSection, Student, Teacher, ThemeSettings, StudentStatus } from './types';
 import { Menu, X, Database, Download, Save, FileSpreadsheet, Trash2, Upload, Users, Weight } from 'lucide-react';
 
@@ -143,6 +145,7 @@ const App: React.FC = () => {
           students={students}
           onEditStudent={handleEditStudent}
           onDeleteStudent={handleDeleteStudent}
+          onUpdateStudent={handleUpdateStudent}
         />;
       case AppSection.TURMAS: 
         return <ClassesView students={students} onEditStudent={handleEditStudent} onUpdateStudent={handleUpdateStudent} />;
@@ -247,7 +250,19 @@ const App: React.FC = () => {
         </button>
       </div>
       <Sidebar activeSection={activeSection} setActiveSection={(s) => { setActiveSection(s); setIsMobileMenuOpen(false); if (s !== AppSection.CADASTRO) setEditingStudent(null); }} onLogout={() => { setIsAuthenticated(false); localStorage.removeItem('jm_studio_auth'); }} isOpen={isMobileMenuOpen} canInstall={!!installPrompt} onInstall={() => installPrompt?.prompt()} />
-      <main className="flex-1 md:ml-64 p-6 md:p-12 overflow-x-hidden">{renderSection()}</main>
+      <main className="flex-1 md:ml-64 p-6 md:p-12 overflow-x-hidden">
+        {renderSection()}
+      </main>
+      
+      {isAuthenticated && !isPublicMode && (
+        <>
+          <BirthdayAlert students={students} />
+          <OverdueAlert 
+            students={students} 
+            onAction={() => setActiveSection(AppSection.PAGAMENTOS)}
+          />
+        </>
+      )}
     </div>
   );
 };

@@ -1,15 +1,16 @@
 
 import React, { useState, useMemo } from 'react';
-import { Search, Edit2, Trash2, Phone, Calendar, Clock, CreditCard, User, Filter, MoreVertical, ShieldCheck, Mail, MessageSquare } from 'lucide-react';
+import { Search, Edit2, Trash2, Phone, Calendar, Clock, CreditCard, User, Filter, MoreVertical, ShieldCheck, Mail, MessageSquare, UserX, UserCheck } from 'lucide-react';
 import { Student, StudentStatus } from '../types';
 
 interface StudentsViewProps {
   students: Student[];
   onEditStudent: (student: Student) => void;
   onDeleteStudent: (id: string) => void;
+  onUpdateStudent: (student: Student) => void;
 }
 
-const StudentsView: React.FC<StudentsViewProps> = ({ students, onEditStudent, onDeleteStudent }) => {
+const StudentsView: React.FC<StudentsViewProps> = ({ students, onEditStudent, onDeleteStudent, onUpdateStudent }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StudentStatus | 'Todos'>('Todos');
 
@@ -25,6 +26,18 @@ const StudentsView: React.FC<StudentsViewProps> = ({ students, onEditStudent, on
   const handleWhatsApp = (phone: string, name: string) => {
     const message = `Olá ${name.split(' ')[0]}! Tudo bem? 💪`;
     window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const toggleStatus = (student: Student) => {
+    const newStatus = student.status === StudentStatus.ATIVO ? StudentStatus.INATIVO : StudentStatus.ATIVO;
+    const action = newStatus === StudentStatus.INATIVO ? 'inativar' : 'reativar';
+    
+    if (confirm(`Deseja realmente ${action} o aluno ${student.name}?`)) {
+      onUpdateStudent({
+        ...student,
+        status: newStatus
+      });
+    }
   };
 
   return (
@@ -65,8 +78,15 @@ const StudentsView: React.FC<StudentsViewProps> = ({ students, onEditStudent, on
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredStudents.map(student => (
-          <div key={student.id} className="bg-slate-900/60 border border-slate-800 rounded-[2.5rem] p-8 group hover:border-blue-500/30 transition-all shadow-2xl relative overflow-hidden">
+          <div key={student.id} className={`bg-slate-900/60 border rounded-[2.5rem] p-8 group transition-all shadow-2xl relative overflow-hidden ${student.status === StudentStatus.INATIVO ? 'border-rose-900/20 grayscale-[0.5] opacity-80' : 'border-slate-800 hover:border-blue-500/30'}`}>
             <div className="absolute top-0 right-0 p-6 flex gap-2">
+              <button 
+                onClick={() => toggleStatus(student)}
+                className={`p-3 rounded-xl transition-all shadow-lg active:scale-90 ${student.status === StudentStatus.ATIVO ? 'bg-slate-800 text-slate-400 hover:bg-rose-600 hover:text-white' : 'bg-emerald-600 text-white hover:bg-emerald-500'}`}
+                title={student.status === StudentStatus.ATIVO ? "Inativar Aluno" : "Reativar Aluno"}
+              >
+                {student.status === StudentStatus.ATIVO ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+              </button>
               <button 
                 onClick={() => onEditStudent(student)}
                 className="p-3 bg-slate-800 hover:bg-blue-600 text-slate-400 hover:text-white rounded-xl transition-all shadow-lg active:scale-90"
@@ -84,11 +104,11 @@ const StudentsView: React.FC<StudentsViewProps> = ({ students, onEditStudent, on
             </div>
 
             <div className="flex items-center gap-5 mb-8">
-              <div className="w-16 h-16 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-500 font-black text-2xl">
+              <div className={`w-16 h-16 rounded-2xl border flex items-center justify-center font-black text-2xl ${student.status === StudentStatus.ATIVO ? 'bg-blue-600/10 border-blue-500/20 text-blue-500' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
                 {student.name.charAt(0)}
               </div>
-              <div className="flex-1 min-w-0 pr-16">
-                <h4 className="text-xl font-black text-white truncate uppercase tracking-tight">{student.name}</h4>
+              <div className="flex-1 min-w-0 pr-24">
+                <h4 className={`text-xl font-black truncate uppercase tracking-tight ${student.status === StudentStatus.ATIVO ? 'text-white' : 'text-slate-500'}`}>{student.name}</h4>
                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-black uppercase mt-2 ${
                   student.status === StudentStatus.ATIVO ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
                   student.status === StudentStatus.PENDENTE ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
@@ -102,26 +122,27 @@ const StudentsView: React.FC<StudentsViewProps> = ({ students, onEditStudent, on
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div className="space-y-1">
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">WhatsApp</p>
-                <p className="text-white font-bold text-sm">{student.phone}</p>
+                <p className={`font-bold text-sm ${student.status === StudentStatus.ATIVO ? 'text-white' : 'text-slate-600'}`}>{student.phone}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Horário</p>
-                <p className="text-blue-400 font-bold text-sm uppercase">{student.classTime || 'Pendente'}</p>
+                <p className={`font-bold text-sm uppercase ${student.status === StudentStatus.ATIVO ? 'text-blue-400' : 'text-slate-600'}`}>{student.classTime || 'Pendente'}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Mensalidade</p>
-                <p className="text-white font-black text-sm">R$ {student.monthlyFee.toLocaleString()}</p>
+                <p className={`font-black text-sm ${student.status === StudentStatus.ATIVO ? 'text-white' : 'text-slate-600'}`}>R$ {student.monthlyFee.toLocaleString()}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Vencimento</p>
-                <p className="text-white font-bold text-sm">Todo dia {student.billingDay}</p>
+                <p className={`font-bold text-sm ${student.status === StudentStatus.ATIVO ? 'text-white' : 'text-slate-600'}`}>Todo dia {student.billingDay}</p>
               </div>
             </div>
 
             <div className="pt-6 border-t border-slate-800/50 flex gap-3">
               <button 
                 onClick={() => handleWhatsApp(student.phone, student.name)}
-                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${student.status === StudentStatus.ATIVO ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-900 text-slate-700 cursor-not-allowed'}`}
+                disabled={student.status === StudentStatus.INATIVO}
               >
                 <MessageSquare className="w-4 h-4" /> Contato
               </button>
