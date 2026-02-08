@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, UserPlus, Users, DollarSign, Dumbbell, Calendar, GraduationCap, LogOut, Weight, Database, BarChart3, CreditCard, DownloadCloud, Contact } from 'lucide-react';
+import { LayoutDashboard, UserPlus, Users, DollarSign, Dumbbell, Calendar, GraduationCap, LogOut, Weight, Database, BarChart3, CreditCard, DownloadCloud, Contact, Fingerprint } from 'lucide-react';
 import { AppSection } from '../types';
 
 interface SidebarProps {
@@ -19,6 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, setActiveSection, onLo
     { id: AppSection.ALUNOS, label: 'Alunos', icon: Contact },
     { id: AppSection.TURMAS, label: 'Turmas', icon: Users },
     { id: AppSection.PAGAMENTOS, label: 'Pagamentos', icon: CreditCard },
+    { id: AppSection.CHECKIN, label: 'Check-in', icon: Fingerprint },
     { id: AppSection.PROFESSORES, label: 'Professores', icon: GraduationCap },
     { id: AppSection.CALENDARIO, label: 'Calendário', icon: Calendar },
     { id: AppSection.FINANCEIRO, label: 'Financeiro', icon: DollarSign },

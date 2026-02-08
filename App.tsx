@@ -15,6 +15,7 @@ import PaymentsView from './components/PaymentsView';
 import StudentsView from './components/StudentsView';
 import OverdueAlert from './components/OverdueAlert';
 import BirthdayAlert from './components/BirthdayAlert';
+import CheckinView from './components/CheckinView';
 import { AppSection, Student, Teacher, ThemeSettings, StudentStatus } from './types';
 import { Menu, X, Database, Download, Save, FileSpreadsheet, Trash2, Upload, Users, Weight } from 'lucide-react';
 
@@ -89,6 +90,10 @@ const App: React.FC = () => {
     if (activeSection === AppSection.CADASTRO) setActiveSection(AppSection.DASHBOARD);
   };
 
+  const handleUpdateTeacher = (t: Teacher) => {
+    setTeachers(prev => prev.map(x => x.id === t.id ? { ...t } : x));
+  };
+
   const handleDeleteStudent = (id: string) => {
     if (confirm("ATENÇÃO: Deseja excluir permanentemente este aluno do sistema?")) {
       setStudents(prev => prev.filter(s => s.id !== id));
@@ -151,6 +156,13 @@ const App: React.FC = () => {
         return <ClassesView students={students} onEditStudent={handleEditStudent} onUpdateStudent={handleUpdateStudent} />;
       case AppSection.PAGAMENTOS: 
         return <PaymentsView students={students} onUpdateStudent={handleUpdateStudent} onEditStudent={handleEditStudent} />;
+      case AppSection.CHECKIN:
+        return <CheckinView 
+          students={students} 
+          onUpdateStudent={handleUpdateStudent} 
+          teachers={teachers}
+          onUpdateTeacher={handleUpdateTeacher}
+        />;
       case AppSection.FINANCEIRO: return <FinancialControl students={students} onUpdateStudent={handleUpdateStudent} />;
       case AppSection.TREINO: return <WorkoutPlanner students={students} onUpdateStudent={handleUpdateStudent} />;
       case AppSection.CALENDARIO: return <CalendarView students={students} />;
@@ -159,7 +171,7 @@ const App: React.FC = () => {
         return <TeacherView 
           teachers={teachers} 
           onAddTeacher={t => setTeachers([...teachers, { ...t, id: Math.random().toString(36).substr(2, 9) }])}
-          onUpdateTeacher={t => setTeachers(teachers.map(x => x.id === t.id ? t : x))}
+          onUpdateTeacher={handleUpdateTeacher}
           onDeleteTeacher={id => { if(confirm("Excluir professor?")) setTeachers(teachers.filter(x => x.id !== id)); }}
         />;
       case AppSection.CONFIGURACAO: 

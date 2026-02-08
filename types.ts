@@ -60,6 +60,12 @@ export interface Student {
   observations?: string;
   payments?: PaymentRecord[];
   workouts?: WorkoutPlan[];
+  checkins?: string[]; // Array de datas em formato ISO
+}
+
+export interface TeacherCheckin {
+  timestamp: string;
+  hour: string;
 }
 
 export interface Teacher {
@@ -70,6 +76,7 @@ export interface Teacher {
   email: string;
   salary: number;
   hireDate: string;
+  checkins?: TeacherCheckin[];
 }
 
 export enum AppSection {
@@ -78,6 +85,7 @@ export enum AppSection {
   ALUNOS = 'ALUNOS',
   TURMAS = 'TURMAS',
   PAGAMENTOS = 'PAGAMENTOS',
+  CHECKIN = 'CHECKIN',
   PROFESSORES = 'PROFESSORES',
   FINANCEIRO = 'FINANCEIRO',
   TREINO = 'TREINO',
